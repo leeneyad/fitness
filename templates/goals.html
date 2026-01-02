@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <title>Goals & Commitment 2/3</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #e2d5ef; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: rgb(227, 233, 210); padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(21, 42, 49, 0.855); }
+        h2 { text-align: center; color: #3c3939; margin-bottom: 25px; border-bottom: 2px solid #107de4; padding-bottom: 10px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #494747; }
+        input[type="number"], select { width: 100%; padding: 12px; border: 1px solid #ccccccf7; border-radius: 6px; box-sizing: border-box; font-size: 16px; transition: border-color 0.3s; }
+        input[type="number"]:focus, select:focus { border-color: #0c7e2e; outline: none; box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); }
+        button { background-color: #178f33; color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-size: 18px; margin-top: 15px; transition: background-color 0.3s; }
+        button:hover { background-color: #1e7e34; }
+        .data-summary { background-color: #f7f9fa; border-left: 5px solid #0783ff; padding: 15px; margin-bottom: 20px; border-radius: 6px; }
+        .data-summary p { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Step 2: Goals & Commitment</h2>
+        
+        <div class="data-summary">
+            <h4>Your Current Data:</h4>
+            <p>
+                Weight: <strong>{{ basic_data.weight }} kg</strong> |
+                Height: <strong>{{ basic_data.height }} cm</strong> |
+                Age: <strong>{{ basic_data.age }} years</strong>
+            </p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('submit_goals_and_predict') }}">
+            
+            <div class="form-group">
+                <label for="goal">Your main goal over the next 3 months:</label>
+                <select id="goal" name="goal" required>
+                    <option value="Fat & Weight Loss" selected>Fat & Weight Loss</option>
+                    <option value="Muscle Building (Bulk)">Muscle Building (Bulk)</option>
+                    <option value="General Fitness & Health">General Fitness & Health</option>
+                </select>
+            </div>
+            
+            <hr>
+            
+            <h4>Your future commitment (weekly average):</h4>
+            
+            <div class="form-group">
+                <label for="weekly_hours">Total weekly training hours (estimated):</label>
+                <input type="number" id="weekly_hours" name="weekly_hours" step="0.5" value="4.0" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="sleep_hours">Average daily sleep hours:</label>
+                <input type="number" id="sleep_hours" name="sleep_hours" step="0.5" value="7.5" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="diet_type">Diet commitment:</label>
+                <select id="diet_type" name="diet_type" required>
+                    <option value="بروتين_عالي_سعرات_منخفضة" selected>High Protein / Low Calories</option>
+                    <option value="سعرات_عالية_كارب_عالي">High Calories / High Carbohydrates</option>
+                    <option value="توازن_عام">Balanced Nutrition</option>
+                </select>
+            </div>
+
+            <hr>
+
+            <h4>Select your main exercise:</h4>
+            <p style="font-size: 0.9em; color: #474646;">
+                This will be used to recommend alternative exercises.
+            </p>
+            
+            <div class="form-group">
+                <label for="targeted_muscle">Target muscle group:</label>
+                <select id="targeted_muscle" name="targeted_muscle" required>
+                    {% for muscle in muscle_groups %}
+                        <option value="{{ muscle }}">{{ muscle }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="main_exercise">Selected main exercise:</label>
+                <select id="main_exercise" name="main_exercise" required>
+                    <option value="">Select a muscle first</option>
+                </select>
+            </div>
+
+            <button type="submit">Get My Prediction & Plan </button>
+        </form>
+    </div>
+
+    <script>
+        const exercisesData = JSON.parse('{{ exercises | tojson | safe }}');
+        const muscleSelect = document.getElementById('targeted_muscle');
+        const exerciseSelect = document.getElementById('main_exercise');
+
+        function updateExercises() {
+            const selectedMuscle = muscleSelect.value;
+            exerciseSelect.innerHTML = ''; 
+            
+            if (exercisesData[selectedMuscle]) {
+                exercisesData[selectedMuscle].forEach(exercise => {
+                    const option = document.createElement('option');
+                    option.value = exercise;
+                    option.textContent = exercise;
+                    exerciseSelect.appendChild(option);
+                });
+            } else {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'Select a muscle first';
+                exerciseSelect.appendChild(option);
+            }
+        }
+
+        muscleSelect.addEventListener('change', updateExercises);
+        updateExercises(); 
+    </script>
+</body>
+</html>
