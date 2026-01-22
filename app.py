@@ -1,8 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session
 import joblib
 import numpy as np
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
 from datetime import datetime
 import secrets
 import os
@@ -11,10 +9,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-
-# ================= Email Config =================
-
-SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
 
 app.secret_key = secrets.token_hex(32)
 
