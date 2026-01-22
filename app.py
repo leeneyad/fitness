@@ -1,7 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import joblib
 import numpy as np
-from flask_mail import Mail, Message
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 from datetime import datetime
 import secrets
 import os
@@ -13,15 +14,7 @@ app = Flask(__name__)
 
 # ================= Email Config =================
 
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 465
-app.config['MAIL_USE_TLS'] = False
-app.config['MAIL_USE_SSL'] = True
-
-app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
-app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
-app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')
-mail = Mail(app)
+SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
 
 app.secret_key = secrets.token_hex(32)
 
@@ -214,13 +207,7 @@ def send_email():
     if not email or not results:
         return redirect(url_for('index'))
 
-    msg = Message(
-        subject=" Your Personalized Fitness Plan from Gym & Meal AI",
-        recipients=[email]
-    )
-
-  
-    msg.html = f"""
+    html_content = f"""
     <div style="font-family: Arial, sans-serif; border: 1px solid #ddd; padding: 20px; border-radius: 10px; max-width: 600px;">
         <h2 style="color: #2c3e50; text-align: center;">Your AI Fitness Plan</h2>
         <p style="font-size: 16px;">Hello Champion, here are your predicted results:</p>
@@ -251,9 +238,17 @@ def send_email():
         </p>
     </div>
     """
-    
+
+    message = Mail(
+        from_email='noreply@yourdomain.com',  # Replace with your verified sender
+        to_emails=email,
+        subject='Your Personalized Fitness Plan from Gym & Meal AI',
+        html_content=html_content
+    )
+
     try:
-        mail.send(msg)
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(message)
         return "<h2>Email sent successfully with HTML!</h2>"
     except Exception as e:
         return f"Error: {str(e)}"

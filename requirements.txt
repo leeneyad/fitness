@@ -8,4 +8,4 @@ jupyter
 pytest
 python-dotenv
 Flask
-Flask-Mail
+sendgrid
