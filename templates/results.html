@@ -85,20 +85,7 @@
                 <p>Sorry, no alternative exercises are currently available for this workout.</p>
             {% endif %}
         </div>
-        <div class="result-box prediction-summary">
-    <h3>Get Your Plan by Email</h3>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <p style="color: {% if category == 'error' %}red{% else %}green{% endif %};">{{ message }}</p>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    <form action="{{ url_for('send_email') }}" method="POST">
-        <input type="email" name="email" placeholder="Enter your email" required>
-        <button type="submit">Send Results to Email</button>
-    </form>
-</div>
+
         <a href="{{ url_for('index') }}">
             <button type="button" class="reset-button">Start a New Analysis</button>
         </a>
