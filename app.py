@@ -1,33 +1,32 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-import joblib  
+import joblib
 import numpy as np
 from flask_mail import Mail, Message
 from datetime import datetime
 import secrets
 import os
+from dotenv import load_dotenv
 
-# =======================================================
-# 1. Basic Flask setup
-# =======================================================
+load_dotenv()
+
 app = Flask(__name__)
 
 # ================= Email Config =================
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 465  # تغيير المنفذ لـ 465
-app.config['MAIL_USE_SSL'] = True # تفعيل SSL
-app.config['MAIL_USE_TLS'] = False # تعطيل TLS
 
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
 
 app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')
 mail = Mail(app)
-# Secret key is required for using session to pass data between pages
+
 app.secret_key = secrets.token_hex(32)
 
-# =======================================================
-# 2. Helper functions: alternative workout recommendation
-# =======================================================
-# Alternative exercises data: (muscle): (main exercise): [highly effective alternatives]
+
+
 MUSCLE_WORKOUT_MAP = {
     "Chest": {
         "Dumbbell Press": ["Barbell Bench Press", "Push-ups", "Cable Flyes"],
@@ -64,9 +63,7 @@ MUSCLE_WORKOUT_MAP = {
 }
 
 def get_alternative_workouts(muscle_group, main_exercise):
-    """
-    Returns a list of alternative exercises for the same muscle based on the above data.
-    """
+  
     muscle = muscle_group.strip()
     exercise = main_exercise.strip()
 
@@ -74,9 +71,9 @@ def get_alternative_workouts(muscle_group, main_exercise):
         if muscle in m_key:
             alternatives = exercises.get(exercise, [])
             if alternatives:
-                return f"For similar effectiveness to **{exercise}** (targeting: {m_key}), we recommend the following alternatives:", alternatives
+                return f"For similar effectiveness to *{exercise}* (targeting: {m_key}), we recommend the following alternatives:", alternatives
             else:
-                # If the exact exercise isn't found, suggest general alternatives for the same muscle
+
                 all_alternatives = set()
                 for alts in exercises.values():
                     all_alternatives.update(alts)
@@ -85,28 +82,25 @@ def get_alternative_workouts(muscle_group, main_exercise):
                 general_alternatives = list(all_alternatives)[:3]
                 
                 if general_alternatives:
-                    return f"No direct alternatives found for **{exercise}**. Here are some top alternatives for {m_key}:", general_alternatives
+                    return f"No direct alternatives found for *{exercise}*. Here are some top alternatives for {m_key}:", general_alternatives
                 else:
                     return f"Sorry, no alternative exercises are currently available for {m_key}.", []
 
     return f"Sorry, the muscle group '{muscle_group}' is not supported in the recommendation system.", []
 
 def run_prediction_logic(data):
-    """
-    Dummy function that simulates predicting results based on commitment.
-    **Replace this logic with your trained models (joblib) for real predictions.**
-    """
-    # Extract basic data
+   
+    # basic data
     age = int(data.get('age', 25))
     height = float(data.get('height', 175))
     weight = float(data.get('weight', 75))
     
-    # Extract goal data
+    # goal data
     weekly_hours = float(data.get('weekly_hours', 5))
     sleep_hours = float(data.get('sleep_hours', 7))
     goal = data.get('goal', 'general_fitness')
     
-    # Dummy prediction logic (3 months)
+    
     initial_bmi = weight / ((height/100)**2)
     
     if goal == "weight_loss":
@@ -134,13 +128,11 @@ def run_prediction_logic(data):
     
     return results
 
-# =======================================================
-# 3. Flask Routes
-# =======================================================
 
-# -------------------------------------------------------
-# Route 1: Home page to collect basic data (index.html)
-# -------------------------------------------------------
+
+# 3 Routes
+# Route 1: collect basic data (index.html)
+
 @app.route('/', methods=['GET'])
 def index():
     session.clear()
@@ -148,9 +140,9 @@ def index():
     exercises = {group: list(data.keys()) for group, data in MUSCLE_WORKOUT_MAP.items()}
     return render_template('index.html', muscle_groups=muscle_groups, exercises=exercises)
 
-# -------------------------------------------------------
+
 # Route 2: Process basic data and go to goals page
-# -------------------------------------------------------
+
 @app.route('/submit_basic_data', methods=['POST'])
 def submit_basic_data():
     basic_data = {
@@ -168,9 +160,9 @@ def submit_basic_data():
 
     return redirect(url_for('goals'))
 
-# -------------------------------------------------------
+# 
 # Route 3: Goals page (goals.html)
-# -------------------------------------------------------
+
 @app.route('/goals', methods=['GET'])
 def goals():
     if not session.get('age'):
@@ -181,9 +173,8 @@ def goals():
     
     return render_template('goals.html', basic_data=session, muscle_groups=muscle_groups, exercises=exercises)
 
-# -------------------------------------------------------
-# Route 4: Process goals, predict, and display results
-# -------------------------------------------------------
+
+
 @app.route('/submit_goals_and_predict', methods=['POST'])
 def submit_goals_and_predict():
     goals_data = {
@@ -224,12 +215,11 @@ def send_email():
         return redirect(url_for('index'))
 
     msg = Message(
-    subject="Your Personalized Fitness Plan from Gym & Meal AI",
-    sender=os.environ.get('MAIL_USERNAME'),
-    recipients=[email]
-)
+        subject=" Your Personalized Fitness Plan from Gym & Meal AI",
+        recipients=[email]
+    )
 
-    # هنا نستخدم HTML لتنسيق الإيميل
+  
     msg.html = f"""
     <div style="font-family: Arial, sans-serif; border: 1px solid #ddd; padding: 20px; border-radius: 10px; max-width: 600px;">
         <h2 style="color: #2c3e50; text-align: center;">Your AI Fitness Plan</h2>
@@ -267,8 +257,6 @@ def send_email():
         return "<h2>Email sent successfully with HTML!</h2>"
     except Exception as e:
         return f"Error: {str(e)}"
-# =======================================================
-# 4. Run the app
-# =======================================================
+
 if __name__ == '__main__':
     app.run(debug=True)
