@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 import joblib
 import numpy as np
 from sendgrid import SendGridAPIClient
@@ -207,6 +207,18 @@ def send_email():
     if not email or not results:
         return redirect(url_for('index'))
 
+    if not SENDGRID_API_KEY:
+        error_html = """
+        <html>
+        <body>
+
+        <p>Please set the SENDGRID_API_KEY environment variable on your deployment platform (e.g., Render).</p>
+        <a href="/">Go back</a>
+        </body>
+        </html>
+        """
+        return error_html
+
     html_content = f"""
     <div style="font-family: Arial, sans-serif; border: 1px solid #ddd; padding: 20px; border-radius: 10px; max-width: 600px;">
         <h2 style="color: #2c3e50; text-align: center;">Your AI Fitness Plan</h2>
@@ -240,7 +252,7 @@ def send_email():
     """
 
     message = Mail(
-        from_email='noreply@yourdomain.com',  # Replace with your verified sender
+        from_email='noreply@example.com',  # Replace with your verified sender email on SendGrid
         to_emails=email,
         subject='Your Personalized Fitness Plan from Gym & Meal AI',
         html_content=html_content
@@ -249,10 +261,27 @@ def send_email():
     try:
         sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(message)
-        return "<h2>Email sent successfully with HTML!</h2>"
+        success_html = """
+        <html>
+        <body>
+        <h2>Email sent successfully!</h2>
+        <p>Your fitness plan has been sent to your email.</p>
+        <a href="/">Go back</a>
+        </body>
+        </html>
+        """
+        return success_html
     except Exception as e:
-        return f"Error: {str(e)}"
-
+        error_html = f"""
+        <html>
+        <body>
+        <h2>Error sending email: {str(e)}</h2>
+        <p>Please check your SendGrid configuration.</p>
+        <a href="/">Go back</a>
+        </body>
+        </html>
+        """
+        return error_html
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
