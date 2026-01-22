@@ -172,16 +172,16 @@ def submit_goals_and_predict():
         'targeted_muscle': request.form.get('targeted_muscle'),
         'main_exercise': request.form.get('main_exercise')
     }
-    
+
     all_data = {**session, **goals_data}
-    
+
     prediction_results = run_prediction_logic(all_data)
-    
+
     targeted_muscle = goals_data.get('targeted_muscle', '')
     main_exercise = goals_data.get('main_exercise', '')
-    
+
     alternative_title, alternative_workouts = get_alternative_workouts(targeted_muscle, main_exercise)
-    
+
     final_results = {
         'prediction': prediction_results,
         'alternative_workouts_title': alternative_title,
@@ -190,8 +190,15 @@ def submit_goals_and_predict():
     }
 
     session['last_results'] = final_results
-    
+
     return render_template('results.html', results=final_results)
+
+@app.route('/results', methods=['GET'])
+def results():
+    if 'last_results' in session:
+        return render_template('results.html', results=session['last_results'])
+    else:
+        return redirect(url_for('index'))
 
 
 if __name__ == '__main__':
